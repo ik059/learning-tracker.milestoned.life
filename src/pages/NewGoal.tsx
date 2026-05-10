@@ -58,7 +58,7 @@ const NewGoal = ()=>{
 
         addGoal(newGoal)
 
-        navigate(`/goals/${newGoal.id}`)
+        window.location.href = `/goals/${newGoal.id}`
     }
 
     return (
