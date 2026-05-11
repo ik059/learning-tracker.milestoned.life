@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import NewGoal from './pages/NewGoal'
 import GoalDetails from './pages/GoalDetails'
 import Login from './pages/Login'
+import Register from './pages/Register'
 
 const isAuthenticated = ()=> !!localStorage.getItem('token')
 
@@ -19,7 +20,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path='/login' element={<Login/>}></Route>
-
+          <Route path='/register' element={<Register/>}/>
           <Route path="/" element={
             <ProtectedRoute>
               <Dashboard/>
