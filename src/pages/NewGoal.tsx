@@ -4,6 +4,7 @@ import type { Goal, Topic } from '../types'
 import { useGoals } from '../hooks/useGoals'
 
 const NewGoal = ()=>{
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const navigate = useNavigate()
     const { addGoal } = useGoals()
 

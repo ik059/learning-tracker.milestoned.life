@@ -73,6 +73,7 @@ export const useGoals = () => {
   // Re-read from localStorage when the hook mounts
   // This ensures Dashboard always gets fresh data
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGoals(readFromStorage())
   }, []) // empty array = runs once when component mounts
 
