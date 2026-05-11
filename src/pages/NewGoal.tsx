@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+//import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import type { Goal, Topic } from '../types'
 import { useGoals } from '../hooks/useGoals'
 
