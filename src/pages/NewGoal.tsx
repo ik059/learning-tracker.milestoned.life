@@ -1,13 +1,11 @@
 import React, { useState } from 'react'
-//import { useNavigate, Link } from 'react-router-dom'
-import { Link } from 'react-router-dom'
-import type { Goal, Topic } from '../types'
-import { useGoals } from '../hooks/useGoals'
+import { useNavigate, Link } from 'react-router-dom'
+import type { Topic } from '../types'
+import { useGoalsContext } from '../context/GoalsContext'
 
 const NewGoal = ()=>{
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    //const navigate = useNavigate()
-    const { addGoal } = useGoals()
+    const navigate = useNavigate()
+    const { addGoal } = useGoalsContext()
 
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
@@ -15,6 +13,7 @@ const NewGoal = ()=>{
     const [topics, setTopics]=useState<Topic[]>([])
     const [topicInput, setTopicInput]=useState('')
     const [error, setError] = useState('')
+    const [isSubbmitting, setIsSubmitting] = useState(false)
 
     const handleAddTopic = ()=>{
         const trimmed = topicInput.trim()
@@ -22,9 +21,11 @@ const NewGoal = ()=>{
 
         const newTopic: Topic = {
             id: crypto.randomUUID(),
+            goal_id:'',
             title: trimmed,
             status: 'not_started',
-            createdAt: new Date().toISOString()
+            notes: '',
+            created_at: new Date().toISOString()
         }
         setTopics(prev=>[...prev, newTopic])
 
@@ -35,32 +36,38 @@ const NewGoal = ()=>{
         setTopics(prev => prev.filter(t=>t.id !==id))
     }
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>)=>{
+    const handleTopicKeyDown = (e: React.KeyboardEvent<HTMLInputElement>)=>{
         if(e.key === 'Enter'){
             e.preventDefault()
             handleAddTopic()
         }
     }
 
-    const handleSubmit = (e: React.FormEvent)=>{
+    const handleSubmit = async (e: React.FormEvent)=>{
         e.preventDefault()
         
         if(!title.trim()){
             setError("Please add a goal title.")
             return
         }
-        const newGoal: Goal = {
-            id: crypto.randomUUID(),
-            title: title.trim(),
-            description: description.trim(),
-            deadline: deadline || undefined,
-            topics,
-            createdAt: new Date().toISOString()
+        setIsSubmitting(true)
+        setError('')
+        try{
+            const newGoal = await addGoal({
+                title: title.trim(),
+                description: description.trim(),
+                deadline: deadline || '',
+                topics: topics.map(t=>({title: t.title}))
+            })
+            navigate(`/goals/${newGoal.id}`)
         }
-
-        addGoal(newGoal)
-
-        window.location.href = `/goals/${newGoal.id}`
+        catch(err){
+            setError('Failed to create goal! Please try again later!')
+            console.error(err)
+        }
+        finally{
+            setIsSubmitting(false)
+        }
     }
 
     return (
@@ -130,7 +137,7 @@ const NewGoal = ()=>{
                                     type="text"
                                     value={topicInput}
                                     onChange={e=>{setTopicInput(e.target.value)}}
-                                    onKeyDown={handleKeyDown}
+                                    onKeyDown={handleTopicKeyDown}
                                     className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
                                     placeholder="ex: TwinCat, Timer, Automation"/>
                                 <button 
@@ -169,6 +176,7 @@ const NewGoal = ()=>{
                         </div>
                         <button 
                             type="submit"
+                            disabled={isSubbmitting}
                             className="w-full bg-purple-600 text-white py-4 rounded-xl font-medium  hover:bg-purple-700 transition-colors"
                             >Create Goal</button>
                             

@@ -16,15 +16,18 @@ api.interceptors.request.use((config)=>{
 })
 
 api.interceptors.response.use(
-    (response) => response,
-    (error)=>{
-        if(error.response?.status === 401){
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
-            window.location.href="/login"
-        }
-        return Promise.reject(error)
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Only redirect if NOT already on login page
+      if (window.location.pathname !== '/login') {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        window.location.href = '/login'
+      }
     }
+    return Promise.reject(error)
+  }
 )
 
 export default api

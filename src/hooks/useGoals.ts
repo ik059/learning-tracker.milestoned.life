@@ -1,117 +1,95 @@
-// import { useState, useEffect } from 'react'
-// import type { Goal } from '../types'
+/* eslint-disable react-hooks/immutability */
+import { useEffect, useState } from 'react'
 
-// const STORAGE_KEY = 'milestoned_goals'
+import api from '../utils/api'
 
-// export const useGoals = ()=>{
-//     const [goals, setGoals] = useState<Goal[]>(()=>{
-//         try{
-//             const stored = localStorage.getItem("STORAGE_KEY")
-//             return stored ? JSON.parse(stored): []
-//         }
-//         catch{
-//             return []
-//         }   
-//     })
-//     useEffect(()=>{
-//         localStorage.setItem(STORAGE_KEY, JSON.stringify(goals))
-//     },[goals])
+import type { Goal, Topic} from '../types'
 
-//     const addGoal = (goal: Goal) =>{
-//         setGoals(prev => [goal, ...prev])
-//     }
+export const useGoals = ()=>{
+  const [goals, setGoals] = useState<Goal[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
 
-//     const updateGoal = (updateGoal: Goal)=>{
-//         setGoals(prev => 
-//             prev.map(g => g.id === updateGoal.id ? updateGoal: g)
-//         )
-//     }
+  useEffect(()=>{
+    void fetchGoals()
+  },[])
 
-//     const deleteGoal = (deleteGoal : Goal)=>{
-//         setGoals(prev => prev.filter(g=> g.id === deleteGoal.id))
-//     }
-
-//     const getGoal = (id: string):Goal | undefined =>{
-//         return goals.find(g=>g.id === id)
-//     }
-
-//     const getProgress = (goal : Goal): number =>{
-//         if(goal.topics.length == 0) return 0
-//         const done = goal.topics.filter(t=> t.status === 'done').length
-//         return Math.round((done/goal.topics.length))
-//     }
-
-//     return {
-//         goals,
-//         addGoal,
-//         updateGoal,
-//         deleteGoal,
-//         getGoal,
-//         getProgress
-//     }
-// }
-
-import { useState, useEffect } from 'react'
-import type { Goal } from '../types'
-
-const STORAGE_KEY = 'milestoned_goals'
-
-// Helper to read from localStorage
-// We call this in multiple places so it's a separate function
-const readFromStorage = (): Goal[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch {
-    return []
-  }
-}
-
-export const useGoals = () => {
-  const [goals, setGoals] = useState<Goal[]>(readFromStorage)
-
-  // Re-read from localStorage when the hook mounts
-  // This ensures Dashboard always gets fresh data
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGoals(readFromStorage())
-  }, []) // empty array = runs once when component mounts
-
-  // Save to localStorage whenever goals changes
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(goals))
-  }, [goals])
-
-  const addGoal = (goal: Goal) => {
-    setGoals(prev => [goal, ...prev])
+  const fetchGoals = async ()=>{
+    try{
+      setIsLoading(true)
+      const response = await api.get('/goals')
+      setGoals(response.data)
+    }
+    catch(err){
+      setError("Failed to fetch goals!")
+      console.error(err)
+    }
+    finally{
+      setIsLoading(false)
+    }
   }
 
-  const updateGoal = (updatedGoal: Goal) => {
-    setGoals(prev =>
-      prev.map(g => g.id === updatedGoal.id ? updatedGoal : g)
+  const addGoal = async (data :{
+    title: string,
+    description: string,
+    deadline: string,
+    topics: { title: string}[]
+  })=>{
+    const response = await api.post('/goals', data)
+    const newGoal = response.data
+    setGoals(prev=>[newGoal, ...prev])
+    return newGoal;
+  }
+
+  const updateTopicStatus = async (
+    goalId: string,
+    topicId: string,
+    status: 'not_started' | 'in_progress' | 'done'
+  ) =>{
+    console.log(topicId,"A")
+    console.log(goalId,"B")
+    const response = await api.patch<Topic>(`/goals/${goalId}/topics/${topicId}`, {status})
+    console.log("A",response)
+    const updatedTopic = response.data
+
+    setGoals(prev => 
+      prev.map(g=>
+        g.id === goalId ?
+        {
+          ...g,
+          topics: g.topics.map(t =>
+            t.id === topicId ? updatedTopic : t
+          ),
+        }
+        : g
+      )
     )
   }
 
-  const deleteGoal = (id: string) => {
-    setGoals(prev => prev.filter(g => g.id !== id))
+  const deleteGoal = async (id: string)=>{
+    await api.delete(`/goals/${id}`)
+    setGoals(prev => prev.filter(g => g.id === id))
   }
 
-  const getGoal = (id: string): Goal | undefined => {
-    return goals.find(g => g.id === id)
+  const getGoal = (id: string) : Goal | undefined =>{
+    return goals.find(g=>g.id === id)
   }
 
-  const getProgress = (goal: Goal): number => {
-    if (goal.topics.length === 0) return 0
-    const done = goal.topics.filter(t => t.status === 'done').length
-    return Math.round((done / goal.topics.length) * 100)
+  const getProgress = (goal: Goal): number =>{
+    if(goal.topics.length === 0) return 0
+    const done = goal.topics.filter(t=>t.status === 'done').length
+    return Math.round((done/goal.topics.length)*100)
   }
 
   return {
     goals,
+    isLoading,
+    error,
     addGoal,
-    updateGoal,
+    updateTopicStatus,
     deleteGoal,
     getGoal,
-    getProgress
+    getProgress,
+    fetchGoals
   }
 }

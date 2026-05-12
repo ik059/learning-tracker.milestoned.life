@@ -5,11 +5,25 @@ import type { ReactNode } from 'react'
 
 interface GoalContextType {
     goals : Goal[]
-    addGoal: (goal: Goal) => void
-    updateGoal:(goal: Goal) => void
-    deleteGoal: (id: string) => void
+    isLoading: boolean,
+    error: string,
+    addGoal: (data:{
+        title: string,
+        description: string,
+        deadline: string,
+        topics: { title: string}[]
+    }) => Promise<Goal>
+
+    updateTopicStatus:(
+        goalId: string,
+        topicId: string,
+        status: 'not_started' | 'in_progress' | 'done'
+    ) => Promise<void>
+
+    deleteGoal: (id: string) => Promise<void>
     getGoal: (id : string)=>Goal | undefined
     getProgress:(goal: Goal) => number
+    fetchGoals: ()=>Promise<void>
 }
 
 const GoalsContext = createContext<GoalContextType | undefined>(undefined)

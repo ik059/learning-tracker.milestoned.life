@@ -59,7 +59,7 @@ const TopicItem = ({
 const GoalDetail = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { getGoal, updateGoal, deleteGoal, getProgress } = useGoalsContext()
+  const { getGoal, updateTopicStatus, deleteGoal, getProgress } = useGoalsContext()
 
   const goal = getGoal(id!)
 
@@ -79,19 +79,20 @@ const GoalDetail = () => {
   const progress = getProgress(goal)
 
   const handleStatusChange = (topicId: string, newStatus: TopicStatus) => {
-    const updatedGoal = {
-      ...goal,
-      topics: goal.topics.map(t =>
-        t.id === topicId ? { ...t, status: newStatus } : t
-      )
-    }
-    updateGoal(updatedGoal)
+    console.log(topicId, goal.id, newStatus)
+    updateTopicStatus(goal.id, topicId, newStatus)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    console.log("delete")
     if (window.confirm('Delete this goal? This cannot be undone.')) {
-      deleteGoal(goal.id)
-      navigate('/')
+      try{
+        await deleteGoal(goal.id)
+        navigate('/')
+      }
+      catch(err){
+        console.error(err)
+      }
     }
   }
 
@@ -113,7 +114,7 @@ const GoalDetail = () => {
             </h1>
           </div>
           <button
-            onClick={handleDelete}
+            onClick={ handleDelete}
             className="text-sm text-red-400 hover:text-red-600 transition-colors"
           >
             Delete
@@ -170,7 +171,7 @@ const GoalDetail = () => {
                 <TopicItem
                   key={topic.id}
                   topic={topic}
-                  onStatusChange={handleStatusChange}
+                  onStatusChange={ handleStatusChange}
                 />
               ))}
             </div>
